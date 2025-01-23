@@ -1,4 +1,3 @@
-const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 
@@ -9,7 +8,7 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const { secret } = require("../config/jwtSecret");
 
-const signupUser = async (req, res) => {
+const createNewUser = async (req, res) => {
     const { name, username, email, password, phone } = req.body;
 
     if (!username || !password || !name || !email || !phone) {
@@ -34,6 +33,74 @@ const signupUser = async (req, res) => {
     }
 };
 
+// Update user profile
+const updateUserProfile = async (req, res) => {
+    const { username } = req.user;
+    const { name, updatedusername, email, phone, password } = req.body;
+
+    try {
+        // Find the user by username
+        const user = await User.findOne({ username });
+
+        console.log(user);
+        console.log(name, updatedusername, email, phone, password);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Check and update the username
+        if (updatedusername && updatedusername !== user.username) {
+            const usernameExists = await User.findOne({ username: updatedusername });
+            if (usernameExists) {
+                return res.status(400).json({ message: "Username already exists" });
+            }
+            user.username = updatedusername;
+        }
+
+        // Check and update the email
+        if (email && email !== user.email) {
+            const emailExists = await User.findOne({ email });
+            if (emailExists) {
+                return res.status(400).json({ message: "Email already exists" });
+            }
+            user.email = email;
+        }
+
+        // Check and update the phone
+        if (phone && phone !== user.phone) {
+            const phoneExists = await User.findOne({ phone });
+            if (phoneExists) {
+                return res.status(400).json({ message: "Phone number already exists" });
+            }
+            user.phone = phone;
+            user.phoneVerified = false; // Reset phone verification status
+        }
+
+        // Update other fields
+        if (name) user.name = name;
+        if (password) user.password = await bcrypt.hash(password, 10);
+
+        // Save the updated user
+        const updatedUser = await user.save();
+        console.log(updatedUser);
+
+        res.status(200).json({
+            message: "Profile updated successfully",
+            user: {
+                username: updatedUser.username,
+                email: updatedUser.email,
+                phone: updatedUser.phone,
+                name: updatedUser.name,
+            },
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error updating profile", error: error.message });
+    }
+};
+
+
 const loginUser = async (req, res) => {
     const { username, password } = req.body;
 
@@ -53,7 +120,7 @@ const loginUser = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(401).send("Invalid credentials");
 
-        const token = jwt.sign({ username: user.username }, secret , {
+        const token = jwt.sign({ _id: user._id, username: user.username,  }, secret , {
             expiresIn: '1h',
         });
 
@@ -228,4 +295,4 @@ passport.use(new FacebookStrategy(
     }
 ));
   
-module.exports = { signupUser, loginUser, getUserInfo, sendOtp, verifyOtp, loginUsingFacebook, passport };
+module.exports = { createNewUser, loginUser, getUserInfo, sendOtp, verifyOtp, loginUsingFacebook, updateUserProfile, passport };
