@@ -1,13 +1,16 @@
+const fs = require('fs');
+const path = require('path');
+
 const Pet = require('../models/Pet');
 const User = require('../models/User');
 
 // Create Pet Profile
 const createPetProfile = async (req, res) => {
-    const { name, species, age, breed, color, description, traits, photos, healthRecords } = req.body;
+    const { name, species, dateOfBirth, breed, color, description, traits, photos, healthRecords } = req.body;
     const ownerId = req.user._id;
 
     try {
-        if (!name || !species || !age || !breed || !color) {
+        if (!name || !species || !dateOfBirth || !breed || !color) {
             return res.status(400).json({ message: "Missing required fields" });
         }
 
@@ -16,7 +19,7 @@ const createPetProfile = async (req, res) => {
             name,
             ownerId,
             species,
-            age,
+            dateOfBirth,
             breed,
             color,
             description,
@@ -142,7 +145,7 @@ const addPetPhoto = async (req, res) => {
         }
 
         // Save the photo path in the database
-        const photoPath = `/uploads/pets/${petId}/${req.file.filename}`;
+        const photoPath = `/uploads/photos/${req.file.filename}`;
         pet.photos.push(photoPath);
         await pet.save();
 

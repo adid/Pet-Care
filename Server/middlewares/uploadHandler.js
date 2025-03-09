@@ -1,20 +1,16 @@
-const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const multer = require('multer');
 
-// Set storage engine
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
+    destination: async (req, file, cb) => {
         try {
-            const petId = req.params.id;
-            console.log("Pet ID:", petId); // Debug Pet ID
-
-            const dir = path.join(__dirname, '../uploads/pets', petId);
-            console.log("Directory to create:", dir); // Debug Directory Path
+            const petId = path.basename(req.params.id); // Sanitize petId
+            const dir = path.join(__dirname, '../uploads/photos', petId);
 
             if (!fs.existsSync(dir)) {
-                fs.mkdirSync(dir, { recursive: true });
-                console.log("Directory created successfully:", dir);
+                await fs.promises.mkdir(dir, { recursive: true });
+                console.log("Directory created:", dir);
             }
 
             cb(null, dir);
@@ -24,30 +20,31 @@ const storage = multer.diskStorage({
         }
     },
     filename: (req, file, cb) => {
-        const uniqueName = `${Date.now()}_${file.originalname}`;
+        const petId = path.basename(req.params.id);
+        const now = new Date();
+        const creationDate = `${String(now.getDate()).padStart(2, '0')}${String(now.getMonth() + 1).padStart(2, '0')}${now.getFullYear()}`;
+        const serial = String(Date.now()).slice(-5);
+        
+        const uniqueName = `${petId}_${creationDate}_${serial}${path.extname(file.originalname)}`;
+        console.log("Generated filename:", uniqueName);
         cb(null, uniqueName);
     },
 });
 
-
-// File filter to allow only images
+// File filter
 const fileFilter = (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-
-    if (extname && mimetype) {
+    if (allowedTypes.test(path.extname(file.originalname).toLowerCase()) && allowedTypes.test(file.mimetype)) {
         return cb(null, true);
-    } else {
-        cb(new Error("Only images are allowed"));
     }
+    cb(new Error("Only images are allowed"));
 };
 
-// Multer configuration
+// Multer config
 const upload = multer({
     storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB file size limit
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
     fileFilter,
 });
 
-module.exports = { upload };
+module.exports = upload;

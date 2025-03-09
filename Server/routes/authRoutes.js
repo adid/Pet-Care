@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { createNewUser, loginUser, sendOtp, verifyOtp, loginUsingFacebook ,passport } = require('../controllers/authController');
-const {jwtVerification, ensureAuthenticated} = require('../middlewares/authMiddleware');
 
 router.post('/signup', createNewUser);
 

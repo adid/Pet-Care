@@ -1,7 +1,7 @@
 const express = require('express');
 const { createPetProfile, updatePetProfile, deletePetProfile, getPetProfile, addPetPhoto, removePetPhoto , getPetPhotos } = require('../controllers/petController');
 const { jwtVerification } = require('../middlewares/authMiddleware');
-const { upload } = require('../middlewares/uploadHandler');
+const upload = require('../middlewares/uploadHandler');
 const router = express.Router();
 
 // Create a pet profile

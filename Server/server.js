@@ -9,6 +9,7 @@ const mongoURL = process.env.MongoDB_URL;
 const authRoutes = require("./routes/authRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 const petRoutes = require("./routes/petRoutes");
+const adoptionRoutes = require("./routes/adoptionRoutes");
 
 // Database connection
 mongoose.connect(mongoURL)
@@ -23,6 +24,7 @@ app.use(bodyParser.json());
 app.use("/api/auth", authRoutes);
 app.use("/profile", profileRoutes);
 app.use("/pet", petRoutes);
+app.use("/adoption", adoptionRoutes);
 
 // Server
 app.listen(PORT, () => {
